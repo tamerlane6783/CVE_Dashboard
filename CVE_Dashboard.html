@@ -1,3 +1,8 @@
+<!--
+    Copyright 2025
+    Douglas M. Schauer, CISSP
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,9 +10,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Top 10 Recent CVEs Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .copyright-badge {
+            position: fixed;
+            top: 8px;
+            left: 12px;
+            font-size: 10pt;          /* 10 point font size */
+            color: #e5e7eb;           /* Tailwind gray-200 */
+            z-index: 50;
+            pointer-events: none;     /* Do not interfere with clicks */
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen p-8">
+    <!-- Copyright label -->
+    <div class="copyright-badge">
+        © 2025 Douglas M. Schauer, CISSP
+    </div>
+
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-12">
@@ -57,13 +77,13 @@
                         </tr>
                     </thead>
                     <tbody id="cveTableBody" class="divide-y divide-white/10">
-                        <!-- Dynamic content loaded here -->
+                        <!-- Dynamic content -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Last Updated Status -->
+        <!-- Status -->
         <div class="mt-8 text-center p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10">
             <div id="statusMsg" class="text-lg font-medium text-gray-300">
                 Ready to fetch latest CVEs...
@@ -72,10 +92,12 @@
     </div>
 
     <script>
+        // Copyright 2025
+        // Douglas M. Schauer, CISSP
+
         let cves = [];
         let lastUpdateTime = null;
 
-        // Severity color mapping
         const severityColors = {
             CRITICAL: 'bg-red-500 text-white',
             HIGH: 'bg-orange-500 text-white',
@@ -83,7 +105,6 @@
             LOW: 'bg-green-500 text-white'
         };
 
-        // Fetch CVEs from NVD API
         async function fetchCVEs() {
             const statusMsg = document.getElementById('statusMsg');
             statusMsg.textContent = 'Fetching latest CVEs...';
@@ -91,10 +112,11 @@
 
             try {
                 const endDate = new Date().toISOString();
-                const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(); // Last 30 days
+                const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-                const response = await fetch(`https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=10&startIndex=0&pubStartDate=${startDate}&pubEndDate=${endDate}`);
-                
+                const url = `https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=10&startIndex=0&pubStartDate=${startDate}&pubEndDate=${endDate}`;
+                const response = await fetch(url);
+
                 if (!response.ok) {
                     throw new Error(`API request failed: ${response.status}`);
                 }
@@ -108,26 +130,23 @@
                 document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdateTime}`;
                 statusMsg.textContent = `Updated successfully! ${cves.length} CVEs loaded.`;
                 statusMsg.className = 'text-lg font-medium text-green-400';
-
             } catch (error) {
                 console.error('Error fetching CVEs:', error);
+                const statusMsg = document.getElementById('statusMsg');
                 statusMsg.textContent = `Error: ${error.message}. Using fallback data.`;
                 statusMsg.className = 'text-lg font-medium text-red-400';
-                // Fallback data
                 cves = generateFallbackCVEs();
                 renderDashboard();
                 updateStats();
             }
         }
 
-        // Process CVE data
         function processCVEs(vulnerabilities) {
             return vulnerabilities.map(vuln => {
                 const cve = vuln.cve;
-                const descriptions = cve.descriptions.filter(d => d.lang === 'en');
+                const descriptions = (cve.descriptions || []).filter(d => d.lang === 'en');
                 const desc = descriptions[0]?.value || 'No description available';
-                
-                // Extract severity from configurations or default to LOW
+
                 let severity = 'LOW';
                 const metrics = cve.metrics?.cvssMetricV31?.[0]?.cvssData || cve.metrics?.cvssMetricV30?.[0]?.cvssData;
                 if (metrics) {
@@ -140,21 +159,20 @@
                 return {
                     id: cve.id,
                     description: desc.substring(0, 150) + '...',
-                    published: new Date(cve.published).toLocaleDateString(),
+                    published: cve.published ? new Date(cve.published).toLocaleDateString() : 'N/A',
                     severity: severity
                 };
             });
         }
 
-        // Generate fallback CVEs for demo
         function generateFallbackCVEs() {
             return [
                 { id: 'CVE-2025-54322', description: 'Xspeeder SXZOS RCE vulnerability via base64-encoded Python code...', published: '2025-12-28', severity: 'CRITICAL' },
                 { id: 'CVE-2025-15107', description: 'Actiontech SQLE SQL injection vulnerability up to version 4.2511.0...', published: '2025-12-27', severity: 'HIGH' },
-                { id: 'CVE-2025-66737', description: 'Yealink T21P_E2 Phone directory traversal vulnerability...', published: '2025-12-26', severity: 'MEDIUM' },
+                { id: 'CVE-2025-66737', description: 'Yealink T21P_E2 phone directory traversal vulnerability...', published: '2025-12-26', severity: 'MEDIUM' },
                 { id: 'CVE-2025-67015', description: 'Comtech EF Data CDM-625 incorrect access control vulnerability...', published: '2025-12-25', severity: 'HIGH' },
                 { id: 'CVE-2025-67014', description: 'DEV Systemtechnik RF over Fiber incorrect access control...', published: '2025-12-24', severity: 'HIGH' },
-                { id: 'CVE-2025-66738', description: 'Yealink T21P_E2 Phone arbitrary code execution vulnerability...', published: '2025-12-23', severity: 'HIGH' },
+                { id: 'CVE-2025-66738', description: 'Yealink T21P_E2 phone arbitrary code execution vulnerability...', published: '2025-12-23', severity: 'HIGH' },
                 { id: 'CVE-2025-57403', description: 'Cola Dnslog directory traversal vulnerability...', published: '2025-12-22', severity: 'MEDIUM' },
                 { id: 'CVE-2025-64645', description: 'IBM Concert privilege escalation via race condition...', published: '2025-12-21', severity: 'HIGH' },
                 { id: 'CVE-2025-36230', description: 'IBM Aspera Faspex HTML injection vulnerability...', published: '2025-12-20', severity: 'MEDIUM' },
@@ -162,24 +180,32 @@
             ];
         }
 
-        // Render CVE table
         function renderDashboard() {
             const tbody = document.getElementById('cveTableBody');
-            tbody.innerHTML = cves.map(cve => `
-                <tr class="hover:bg-white/10 transition-colors duration-200">
-                    <td class="px-8 py-6 font-mono font-semibold text-xl text-blue-400">${cve.id}</td>
-                    <td class="px-8 py-6 text-gray-200 max-w-md">${cve.description}</td>
-                    <td class="px-8 py-6 text-sm text-gray-400">${cve.published}</td>
-                    <td class="px-8 py-6">
-                        <span class="px-4 py-2 rounded-full text-xs font-bold ${severityColors[cve.severity]}">
-                            ${cve.severity}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = cves.map(cve => {
+                const nvdUrl = `https://nvd.nist.gov/vuln/detail/${cve.id}`;
+                return `
+                    <tr class="hover:bg-white/10 transition-colors duration-200">
+                        <td class="px-8 py-6 font-mono font-semibold text-xl text-blue-400">
+                            <a href="${nvdUrl}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="underline decoration-blue-500/60 hover:decoration-blue-300 hover:text-blue-300">
+                                ${cve.id}
+                            </a>
+                        </td>
+                        <td class="px-8 py-6 text-gray-200 max-w-md">${cve.description}</td>
+                        <td class="px-8 py-6 text-sm text-gray-400">${cve.published}</td>
+                        <td class="px-8 py-6">
+                            <span class="px-4 py-2 rounded-full text-xs font-bold ${severityColors[cve.severity]}">
+                                ${cve.severity}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
-        // Update statistics
         function updateStats() {
             document.getElementById('totalCves').textContent = cves.length;
             const critical = cves.filter(c => c.severity === 'CRITICAL').length;
@@ -188,12 +214,8 @@
             document.getElementById('highCount').textContent = high;
         }
 
-        // Event listeners
-        document.getElementById('updateBtn').addEventListener('click', () => {
-            fetchCVEs();
-        });
+        document.getElementById('updateBtn').addEventListener('click', fetchCVEs);
 
-        // Initial load
         fetchCVEs();
     </script>
 </body>
