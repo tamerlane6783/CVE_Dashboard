@@ -18,7 +18,7 @@
             font-size: 10pt;          /* 10 point font size */
             color: #e5e7eb;           /* Tailwind gray-200 */
             z-index: 50;
-            pointer-events: none;     /* Do not interfere with clicks */
+            pointer-events: none;
         }
     </style>
 </head>
@@ -70,10 +70,11 @@
                 <table class="w-full">
                     <thead class="bg-white/5">
                         <tr>
-                            <th class="px-8 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">CVE ID</th>
-                            <th class="px-8 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Description</th>
-                            <th class="px-8 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Published</th>
-                            <th class="px-8 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Severity</th>
+                            <th class="px-6 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">CVE ID</th>
+                            <th class="px-6 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Description</th>
+                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Published</th>
+                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">CVSS</th>
+                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Severity</th>
                         </tr>
                     </thead>
                     <tbody id="cveTableBody" class="divide-y divide-white/10">
@@ -102,7 +103,8 @@
             CRITICAL: 'bg-red-500 text-white',
             HIGH: 'bg-orange-500 text-white',
             MEDIUM: 'bg-yellow-500 text-black',
-            LOW: 'bg-green-500 text-white'
+            LOW: 'bg-green-500 text-white',
+            UNKNOWN: 'bg-gray-500 text-white'
         };
 
         async function fetchCVEs() {
@@ -132,7 +134,6 @@
                 statusMsg.className = 'text-lg font-medium text-green-400';
             } catch (error) {
                 console.error('Error fetching CVEs:', error);
-                const statusMsg = document.getElementById('statusMsg');
                 statusMsg.textContent = `Error: ${error.message}. Using fallback data.`;
                 statusMsg.className = 'text-lg font-medium text-red-400';
                 cves = generateFallbackCVEs();
@@ -147,36 +148,55 @@
                 const descriptions = (cve.descriptions || []).filter(d => d.lang === 'en');
                 const desc = descriptions[0]?.value || 'No description available';
 
-                let severity = 'LOW';
-                const metrics = cve.metrics?.cvssMetricV31?.[0]?.cvssData || cve.metrics?.cvssMetricV30?.[0]?.cvssData;
-                if (metrics) {
-                    const score = metrics.baseScore;
+                // Prefer CVSS v3.1, then v3.0, then v2 baseScore. [web:59][web:60]
+                let cvssVersion = 'N/A';
+                let cvssScore = 'N/A';
+                let severity = 'UNKNOWN';
+
+                const v31 = cve.metrics?.cvssMetricV31?.[0]?.cvssData;
+                const v30 = cve.metrics?.cvssMetricV30?.[0]?.cvssData;
+                const v2  = cve.metrics?.cvssMetricV2?.[0]?.cvssData;
+
+                const cvssData = v31 || v30 || v2 || null;
+
+                if (cvssData && typeof cvssData.baseScore === 'number') {
+                    cvssScore = cvssData.baseScore.toFixed(1);
+                    cvssVersion = cvssData.version || (v31 ? '3.1' : v30 ? '3.0' : v2 ? '2.0' : 'N/A');
+
+                    const score = cvssData.baseScore;
                     if (score >= 9.0) severity = 'CRITICAL';
                     else if (score >= 7.0) severity = 'HIGH';
                     else if (score >= 4.0) severity = 'MEDIUM';
+                    else if (score > 0) severity = 'LOW';
+                    else severity = 'LOW';
+                } else {
+                    severity = 'LOW';
                 }
 
                 return {
                     id: cve.id,
                     description: desc.substring(0, 150) + '...',
                     published: cve.published ? new Date(cve.published).toLocaleDateString() : 'N/A',
-                    severity: severity
+                    severity: severity,
+                    cvssScore: cvssScore,
+                    cvssVersion: cvssVersion
                 };
             });
         }
 
         function generateFallbackCVEs() {
+            // Example fallback with indicative CVSS scores and severities. [web:59]
             return [
-                { id: 'CVE-2025-54322', description: 'Xspeeder SXZOS RCE vulnerability via base64-encoded Python code...', published: '2025-12-28', severity: 'CRITICAL' },
-                { id: 'CVE-2025-15107', description: 'Actiontech SQLE SQL injection vulnerability up to version 4.2511.0...', published: '2025-12-27', severity: 'HIGH' },
-                { id: 'CVE-2025-66737', description: 'Yealink T21P_E2 phone directory traversal vulnerability...', published: '2025-12-26', severity: 'MEDIUM' },
-                { id: 'CVE-2025-67015', description: 'Comtech EF Data CDM-625 incorrect access control vulnerability...', published: '2025-12-25', severity: 'HIGH' },
-                { id: 'CVE-2025-67014', description: 'DEV Systemtechnik RF over Fiber incorrect access control...', published: '2025-12-24', severity: 'HIGH' },
-                { id: 'CVE-2025-66738', description: 'Yealink T21P_E2 phone arbitrary code execution vulnerability...', published: '2025-12-23', severity: 'HIGH' },
-                { id: 'CVE-2025-57403', description: 'Cola Dnslog directory traversal vulnerability...', published: '2025-12-22', severity: 'MEDIUM' },
-                { id: 'CVE-2025-64645', description: 'IBM Concert privilege escalation via race condition...', published: '2025-12-21', severity: 'HIGH' },
-                { id: 'CVE-2025-36230', description: 'IBM Aspera Faspex HTML injection vulnerability...', published: '2025-12-20', severity: 'MEDIUM' },
-                { id: 'CVE-2025-6204', description: 'Recent vulnerability in critical infrastructure component...', published: '2025-12-19', severity: 'CRITICAL' }
+                { id: 'CVE-2025-54322', description: 'Xspeeder SXZOS RCE vulnerability via base64-encoded Python code...', published: '2025-12-28', severity: 'CRITICAL', cvssScore: '9.8', cvssVersion: '3.1' },
+                { id: 'CVE-2025-15107', description: 'Actiontech SQLE SQL injection vulnerability up to version 4.2511.0...', published: '2025-12-27', severity: 'HIGH', cvssScore: '8.2', cvssVersion: '3.1' },
+                { id: 'CVE-2025-66737', description: 'Yealink T21P_E2 phone directory traversal vulnerability...', published: '2025-12-26', severity: 'MEDIUM', cvssScore: '6.5', cvssVersion: '3.1' },
+                { id: 'CVE-2025-67015', description: 'Comtech EF Data CDM-625 incorrect access control vulnerability...', published: '2025-12-25', severity: 'HIGH', cvssScore: '7.8', cvssVersion: '3.0' },
+                { id: 'CVE-2025-67014', description: 'DEV Systemtechnik RF over Fiber incorrect access control...', published: '2025-12-24', severity: 'HIGH', cvssScore: '7.5', cvssVersion: '3.0' },
+                { id: 'CVE-2025-66738', description: 'Yealink T21P_E2 phone arbitrary code execution vulnerability...', published: '2025-12-23', severity: 'HIGH', cvssScore: '8.0', cvssVersion: '3.1' },
+                { id: 'CVE-2025-57403', description: 'Cola Dnslog directory traversal vulnerability...', published: '2025-12-22', severity: 'MEDIUM', cvssScore: '5.9', cvssVersion: '3.1' },
+                { id: 'CVE-2025-64645', description: 'IBM Concert privilege escalation via race condition...', published: '2025-12-21', severity: 'HIGH', cvssScore: '7.4', cvssVersion: '3.1' },
+                { id: 'CVE-2025-36230', description: 'IBM Aspera Faspex HTML injection vulnerability...', published: '2025-12-20', severity: 'MEDIUM', cvssScore: '6.1', cvssVersion: '3.0' },
+                { id: 'CVE-2025-6204', description: 'Recent vulnerability in critical infrastructure component...', published: '2025-12-19', severity: 'CRITICAL', cvssScore: '9.1', cvssVersion: '3.1' }
             ];
         }
 
@@ -186,7 +206,7 @@
                 const nvdUrl = `https://nvd.nist.gov/vuln/detail/${cve.id}`;
                 return `
                     <tr class="hover:bg-white/10 transition-colors duration-200">
-                        <td class="px-8 py-6 font-mono font-semibold text-xl text-blue-400">
+                        <td class="px-6 py-6 font-mono font-semibold text-lg text-blue-400">
                             <a href="${nvdUrl}"
                                target="_blank"
                                rel="noopener noreferrer"
@@ -194,10 +214,15 @@
                                 ${cve.id}
                             </a>
                         </td>
-                        <td class="px-8 py-6 text-gray-200 max-w-md">${cve.description}</td>
-                        <td class="px-8 py-6 text-sm text-gray-400">${cve.published}</td>
-                        <td class="px-8 py-6">
-                            <span class="px-4 py-2 rounded-full text-xs font-bold ${severityColors[cve.severity]}">
+                        <td class="px-6 py-6 text-gray-200 max-w-md">${cve.description}</td>
+                        <td class="px-4 py-6 text-sm text-gray-400">${cve.published}</td>
+                        <td class="px-4 py-6 text-sm text-gray-200">
+                            ${cve.cvssScore !== 'N/A'
+                                ? `${cve.cvssScore} <span class="text-gray-400 text-xs">(v${cve.cvssVersion})</span>`
+                                : 'N/A'}
+                        </td>
+                        <td class="px-4 py-6">
+                            <span class="px-4 py-2 rounded-full text-xs font-bold ${severityColors[cve.severity] || severityColors.UNKNOWN}">
                                 ${cve.severity}
                             </span>
                         </td>
