@@ -1,4 +1,6 @@
 <!--
+    CVE Dashboard
+    Lists top 25 recent CVEs from NVD and summarizes severity counts.
     Copyright 2025
     Douglas M. Schauer, CISSP
 -->
@@ -6,85 +8,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Basic HTML metadata -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top 10 Recent CVEs Dashboard</title>
+
+    <title>Top 25 Recent CVEs Dashboard</title>
+
+    <!-- Tailwind CSS via CDN for layout and styling [web:52] -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS for the fixed copyright badge -->
     <style>
+        /* Fixed label in upper-left corner, small 10pt font */
         .copyright-badge {
             position: fixed;
             top: 8px;
             left: 12px;
-            font-size: 10pt;          /* 10 point font size */
-            color: #e5e7eb;           /* Tailwind gray-200 */
+            font-size: 10pt;
+            color: #e5e7eb; /* Tailwind gray-200 equivalent */
             z-index: 50;
-            pointer-events: none;
+            pointer-events: none; /* Prevent blocking clicks below */
         }
     </style>
 </head>
+
+<!-- Main body styling: dark gradient background, white text, padding -->
 <body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen p-8">
-    <!-- Copyright label -->
+
+    <!-- Copyright label shown on the dashboard -->
     <div class="copyright-badge">
         © 2025 Douglas M. Schauer, CISSP
     </div>
 
+    <!-- Main container for dashboard content -->
     <div class="max-w-7xl mx-auto">
-        <!-- Header -->
+
+        <!-- Header section with title and subtitle -->
         <div class="text-center mb-12">
             <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-4">
                 CVE Dashboard
             </h1>
-            <p class="text-xl text-gray-300">Top 10 Most Recent CVEs - Real-time Updates</p>
+            <p class="text-xl text-gray-300">
+                Top 25 Most Recent CVEs - Real-time Updates
+            </p>
         </div>
 
-        <!-- Update Button -->
+        <!-- Update button centered under header -->
         <div class="flex justify-center mb-8">
-            <button id="updateBtn" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 px-8 py-4 rounded-xl text-lg font-semibold shadow-2xl hover:shadow-green-500/25 transition-all duration-300 transform hover:-translate-y-1">
+            <button
+                id="updateBtn"
+                class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700
+                       px-8 py-4 rounded-xl text-lg font-semibold shadow-2xl
+                       hover:shadow-green-500/25 transition-all duration-300 transform hover:-translate-y-1">
                 🔄 Update CVEs (Real-time)
             </button>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div class="bg-gradient-to-br from-blue-500/20 to-blue-600/20 backdrop-blur-sm border border-blue-500/30 rounded-2xl p-8 text-center shadow-2xl hover:shadow-blue-500/20 transition-all duration-300">
-                <div class="text-4xl font-bold text-blue-400 mb-2" id="totalCves">10</div>
+        <!-- Summary cards: total and severity counts -->
+        <!-- Now includes Critical, High, Medium, and Low tallies -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <!-- Total CVEs card -->
+            <div class="bg-gradient-to-br from-blue-500/20 to-blue-600/20 backdrop-blur-sm
+                        border border-blue-500/30 rounded-2xl p-8 text-center shadow-2xl
+                        hover:shadow-blue-500/20 transition-all duration-300">
+                <div id="totalCves" class="text-4xl font-bold text-blue-400 mb-2">25</div>
                 <div class="text-gray-300 font-medium">Total CVEs</div>
             </div>
-            <div class="bg-gradient-to-br from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 rounded-2xl p-8 text-center shadow-2xl hover:shadow-red-500/20 transition-all duration-300">
-                <div class="text-4xl font-bold text-red-400 mb-2" id="criticalCount">0</div>
+
+            <!-- Critical CVEs card -->
+            <div class="bg-gradient-to-br from-red-500/20 to-red-600/20 backdrop-blur-sm
+                        border border-red-500/30 rounded-2xl p-8 text-center shadow-2xl
+                        hover:shadow-red-500/20 transition-all duration-300">
+                <div id="criticalCount" class="text-4xl font-bold text-red-400 mb-2">0</div>
                 <div class="text-gray-300 font-medium">Critical</div>
             </div>
-            <div class="bg-gradient-to-br from-orange-500/20 to-orange-600/20 backdrop-blur-sm border border-orange-500/30 rounded-2xl p-8 text-center shadow-2xl hover:shadow-orange-500/20 transition-all duration-300">
-                <div class="text-4xl font-bold text-orange-400 mb-2" id="highCount">0</div>
+
+            <!-- High CVEs card -->
+            <div class="bg-gradient-to-br from-orange-500/20 to-orange-600/20 backdrop-blur-sm
+                        border border-orange-500/30 rounded-2xl p-8 text-center shadow-2xl
+                        hover:shadow-orange-500/20 transition-all duration-300">
+                <div id="highCount" class="text-4xl font-bold text-orange-400 mb-2">0</div>
                 <div class="text-gray-300 font-medium">High</div>
+            </div>
+
+            <!-- Medium + Low CVEs card -->
+            <div class="bg-gradient-to-br from-yellow-500/20 to-green-600/20 backdrop-blur-sm
+                        border border-yellow-500/30 rounded-2xl p-8 text-center shadow-2xl
+                        hover:shadow-yellow-500/20 transition-all duration-300">
+                <div id="mediumLowCount" class="text-4xl font-bold text-yellow-300 mb-2">0</div>
+                <div class="text-gray-300 font-medium">Medium + Low</div>
             </div>
         </div>
 
-        <!-- CVE Table -->
+        <!-- Main table container for listing CVEs -->
         <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+            <!-- Table header bar with last updated timestamp -->
             <div class="p-8 border-b border-white/10">
                 <h2 class="text-3xl font-bold text-white mb-2">Recent CVEs</h2>
-                <p class="text-gray-400" id="lastUpdated">Last updated: Loading...</p>
+                <p id="lastUpdated" class="text-gray-400">Last updated: Loading...</p>
             </div>
+
+            <!-- Scrollable area for the table -->
             <div class="overflow-x-auto">
                 <table class="w-full">
+                    <!-- Table column headers -->
                     <thead class="bg-white/5">
                         <tr>
-                            <th class="px-6 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">CVE ID</th>
-                            <th class="px-6 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Description</th>
-                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Published</th>
-                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">CVSS</th>
-                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">Severity</th>
+                            <th class="px-6 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                                CVE ID
+                            </th>
+                            <th class="px-6 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                                Description
+                            </th>
+                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                                Published
+                            </th>
+                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                                CVSS
+                            </th>
+                            <th class="px-4 py-6 text-left text-sm font-semibold text-white uppercase tracking-wider">
+                                Severity
+                            </th>
                         </tr>
                     </thead>
+
+                    <!-- Dynamic table body populated via JavaScript -->
                     <tbody id="cveTableBody" class="divide-y divide-white/10">
-                        <!-- Dynamic content -->
+                        <!-- Rows inserted here -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Status -->
+        <!-- Status message panel under the table -->
         <div class="mt-8 text-center p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10">
             <div id="statusMsg" class="text-lg font-medium text-gray-300">
                 Ready to fetch latest CVEs...
@@ -92,13 +148,19 @@
         </div>
     </div>
 
+    <!-- Core dashboard logic implemented in plain JavaScript -->
     <script>
-        // Copyright 2025
-        // Douglas M. Schauer, CISSP
+        // -------------------------
+        // Global state and settings
+        // -------------------------
 
+        // In-memory list of CVE objects currently displayed
         let cves = [];
+
+        // Last time data was successfully updated (for display)
         let lastUpdateTime = null;
 
+        // Mapping of severity label to Tailwind CSS color classes
         const severityColors = {
             CRITICAL: 'bg-red-500 text-white',
             HIGH: 'bg-orange-500 text-white',
@@ -107,52 +169,86 @@
             UNKNOWN: 'bg-gray-500 text-white'
         };
 
+        // ---------------------------------------------
+        // fetchCVEs(): call NVD CVE API and refresh UI
+        // ---------------------------------------------
         async function fetchCVEs() {
             const statusMsg = document.getElementById('statusMsg');
+
+            // Show status while fetching
             statusMsg.textContent = 'Fetching latest CVEs...';
             statusMsg.className = 'text-lg font-medium text-blue-400';
 
             try {
+                // Compute 30-day window for "recent" CVEs [web:2]
                 const endDate = new Date().toISOString();
                 const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-                const url = `https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=10&startIndex=0&pubStartDate=${startDate}&pubEndDate=${endDate}`;
+                // NVD CVE 2.0 API endpoint, requesting 25 results per page [web:2]
+                const url =
+                    `https://services.nvd.nist.gov/rest/json/cves/2.0` +
+                    `?resultsPerPage=25&startIndex=0` +
+                    `&pubStartDate=${startDate}&pubEndDate=${endDate}`;
+
                 const response = await fetch(url);
 
+                // Handle HTTP errors explicitly
                 if (!response.ok) {
                     throw new Error(`API request failed: ${response.status}`);
                 }
 
+                // Parse JSON response into JavaScript object [web:2]
                 const data = await response.json();
+
+                // Normalize and extract relevant fields from NVD response
                 cves = processCVEs(data.vulnerabilities || []);
+
+                // Render table and update summary stats
                 renderDashboard();
                 updateStats();
 
+                // Update last updated time label
                 lastUpdateTime = new Date().toLocaleString();
-                document.getElementById('lastUpdated').textContent = `Last updated: ${lastUpdateTime}`;
+                document.getElementById('lastUpdated').textContent =
+                    `Last updated: ${lastUpdateTime}`;
+
+                // Indicate success in the status message
                 statusMsg.textContent = `Updated successfully! ${cves.length} CVEs loaded.`;
                 statusMsg.className = 'text-lg font-medium text-green-400';
+
             } catch (error) {
+                // Log error in console and show message in UI
                 console.error('Error fetching CVEs:', error);
-                statusMsg.textContent = `Error: ${error.message}. Using fallback data.`;
+                statusMsg.textContent =
+                    `Error: ${error.message}. Using fallback data.`;
                 statusMsg.className = 'text-lg font-medium text-red-400';
+
+                // Use built-in sample data as a fallback if NVD is unavailable
                 cves = generateFallbackCVEs();
                 renderDashboard();
                 updateStats();
             }
         }
 
+        // ----------------------------------------------------------------
+        // processCVEs(): convert raw NVD vulnerability objects into a
+        // compact format used by the dashboard. [web:2][web:59][web:60]
+        // ----------------------------------------------------------------
         function processCVEs(vulnerabilities) {
             return vulnerabilities.map(vuln => {
                 const cve = vuln.cve;
+
+                // Prefer English description if multiple are present
                 const descriptions = (cve.descriptions || []).filter(d => d.lang === 'en');
                 const desc = descriptions[0]?.value || 'No description available';
 
-                // Prefer CVSS v3.1, then v3.0, then v2 baseScore. [web:59][web:60]
+                // Initialize CVSS-related variables
                 let cvssVersion = 'N/A';
                 let cvssScore = 'N/A';
                 let severity = 'UNKNOWN';
 
+                // NVD embeds CVSS v3.1, v3.0, and possibly v2 metrics.
+                // Prefer v3.1, then v3.0, then v2 baseScore. [web:59][web:60]
                 const v31 = cve.metrics?.cvssMetricV31?.[0]?.cvssData;
                 const v30 = cve.metrics?.cvssMetricV30?.[0]?.cvssData;
                 const v2  = cve.metrics?.cvssMetricV2?.[0]?.cvssData;
@@ -160,23 +256,32 @@
                 const cvssData = v31 || v30 || v2 || null;
 
                 if (cvssData && typeof cvssData.baseScore === 'number') {
+                    // Format base score to one decimal place
                     cvssScore = cvssData.baseScore.toFixed(1);
-                    cvssVersion = cvssData.version || (v31 ? '3.1' : v30 ? '3.0' : v2 ? '2.0' : 'N/A');
+                    // Attempt to capture version, otherwise infer from metric used
+                    cvssVersion =
+                        cvssData.version ||
+                        (v31 ? '3.1' : v30 ? '3.0' : v2 ? '2.0' : 'N/A');
 
+                    // Map CVSS score to severity category [web:59]
                     const score = cvssData.baseScore;
-                    if (score >= 9.0) severity = 'CRITICAL';
-                    else if (score >= 7.0) severity = 'HIGH';
-                    else if (score >= 4.0) severity = 'MEDIUM';
-                    else if (score > 0) severity = 'LOW';
-                    else severity = 'LOW';
+                    if (score >= 9.0)       severity = 'CRITICAL';
+                    else if (score >= 7.0)  severity = 'HIGH';
+                    else if (score >= 4.0)  severity = 'MEDIUM';
+                    else if (score > 0.0)   severity = 'LOW';
+                    else                    severity = 'LOW';
                 } else {
+                    // If CVSS data is missing, default to LOW so it is visible
                     severity = 'LOW';
                 }
 
+                // Return simplified object used by rendering logic
                 return {
                     id: cve.id,
                     description: desc.substring(0, 150) + '...',
-                    published: cve.published ? new Date(cve.published).toLocaleDateString() : 'N/A',
+                    published: cve.published
+                        ? new Date(cve.published).toLocaleDateString()
+                        : 'N/A',
                     severity: severity,
                     cvssScore: cvssScore,
                     cvssVersion: cvssVersion
@@ -184,8 +289,11 @@
             });
         }
 
+        // -----------------------------------------------------------------
+        // generateFallbackCVEs(): static example data used when the NVD
+        // API cannot be reached or returns an error. [web:59]
+        // -----------------------------------------------------------------
         function generateFallbackCVEs() {
-            // Example fallback with indicative CVSS scores and severities. [web:59]
             return [
                 { id: 'CVE-2025-54322', description: 'Xspeeder SXZOS RCE vulnerability via base64-encoded Python code...', published: '2025-12-28', severity: 'CRITICAL', cvssScore: '9.8', cvssVersion: '3.1' },
                 { id: 'CVE-2025-15107', description: 'Actiontech SQLE SQL injection vulnerability up to version 4.2511.0...', published: '2025-12-27', severity: 'HIGH', cvssScore: '8.2', cvssVersion: '3.1' },
@@ -196,16 +304,42 @@
                 { id: 'CVE-2025-57403', description: 'Cola Dnslog directory traversal vulnerability...', published: '2025-12-22', severity: 'MEDIUM', cvssScore: '5.9', cvssVersion: '3.1' },
                 { id: 'CVE-2025-64645', description: 'IBM Concert privilege escalation via race condition...', published: '2025-12-21', severity: 'HIGH', cvssScore: '7.4', cvssVersion: '3.1' },
                 { id: 'CVE-2025-36230', description: 'IBM Aspera Faspex HTML injection vulnerability...', published: '2025-12-20', severity: 'MEDIUM', cvssScore: '6.1', cvssVersion: '3.0' },
-                { id: 'CVE-2025-6204', description: 'Recent vulnerability in critical infrastructure component...', published: '2025-12-19', severity: 'CRITICAL', cvssScore: '9.1', cvssVersion: '3.1' }
+                { id: 'CVE-2025-6204', description: 'Recent vulnerability in critical infrastructure component...', published: '2025-12-19', severity: 'CRITICAL', cvssScore: '9.1', cvssVersion: '3.1' },
+
+                // Additional sample entries to approximate 25 rows
+                { id: 'CVE-2025-70001', description: 'Sample vulnerability for fallback data set...', published: '2025-12-18', severity: 'LOW', cvssScore: '3.2', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70002', description: 'Another sample vulnerability used as placeholder...', published: '2025-12-17', severity: 'LOW', cvssScore: '2.7', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70003', description: 'Fallback vulnerability with medium severity...', published: '2025-12-16', severity: 'MEDIUM', cvssScore: '5.4', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70004', description: 'Fallback high severity vulnerability for demo...', published: '2025-12-15', severity: 'HIGH', cvssScore: '7.2', cvssVersion: '3.0' },
+                { id: 'CVE-2025-70005', description: 'Fallback critical vulnerability for demo...', published: '2025-12-14', severity: 'CRITICAL', cvssScore: '9.0', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70006', description: 'Sample low severity vulnerability in fallback list...', published: '2025-12-13', severity: 'LOW', cvssScore: '3.0', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70007', description: 'Sample medium severity vulnerability in fallback list...', published: '2025-12-12', severity: 'MEDIUM', cvssScore: '5.8', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70008', description: 'Sample high severity fallback vulnerability...', published: '2025-12-11', severity: 'HIGH', cvssScore: '7.9', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70009', description: 'Sample critical severity fallback vulnerability...', published: '2025-12-10', severity: 'CRITICAL', cvssScore: '9.7', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70010', description: 'Additional low severity sample fallback CVE...', published: '2025-12-09', severity: 'LOW', cvssScore: '2.9', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70011', description: 'Additional medium severity sample fallback CVE...', published: '2025-12-08', severity: 'MEDIUM', cvssScore: '4.8', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70012', description: 'Additional high severity sample fallback CVE...', published: '2025-12-07', severity: 'HIGH', cvssScore: '8.1', cvssVersion: '3.0' },
+                { id: 'CVE-2025-70013', description: 'Additional critical severity sample fallback CVE...', published: '2025-12-06', severity: 'CRITICAL', cvssScore: '9.5', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70014', description: 'Additional low severity sample fallback CVE...', published: '2025-12-05', severity: 'LOW', cvssScore: '2.5', cvssVersion: '3.1' },
+                { id: 'CVE-2025-70015', description: 'Additional medium severity sample fallback CVE...', published: '2025-12-04', severity: 'MEDIUM', cvssScore: '5.0', cvssVersion: '3.1' }
             ];
         }
 
+        // -----------------------------------------------------------
+        // renderDashboard(): construct HTML table rows for each CVE
+        // and inject into tbody element.
+        // -----------------------------------------------------------
         function renderDashboard() {
             const tbody = document.getElementById('cveTableBody');
+
+            // Map CVE objects into HTML rows with proper styling
             tbody.innerHTML = cves.map(cve => {
+                // Build NVD URL for each CVE so clicking the ID opens details [web:31]
                 const nvdUrl = `https://nvd.nist.gov/vuln/detail/${cve.id}`;
+
                 return `
                     <tr class="hover:bg-white/10 transition-colors duration-200">
+                        <!-- CVE ID column with link to NVD detail page -->
                         <td class="px-6 py-6 font-mono font-semibold text-lg text-blue-400">
                             <a href="${nvdUrl}"
                                target="_blank"
@@ -214,15 +348,33 @@
                                 ${cve.id}
                             </a>
                         </td>
-                        <td class="px-6 py-6 text-gray-200 max-w-md">${cve.description}</td>
-                        <td class="px-4 py-6 text-sm text-gray-400">${cve.published}</td>
-                        <td class="px-4 py-6 text-sm text-gray-200">
-                            ${cve.cvssScore !== 'N/A'
-                                ? `${cve.cvssScore} <span class="text-gray-400 text-xs">(v${cve.cvssVersion})</span>`
-                                : 'N/A'}
+
+                        <!-- Short description column -->
+                        <td class="px-6 py-6 text-gray-200 max-w-md">
+                            ${cve.description}
                         </td>
+
+                        <!-- Published date column -->
+                        <td class="px-4 py-6 text-sm text-gray-400">
+                            ${cve.published}
+                        </td>
+
+                        <!-- CVSS score and version column -->
+                        <td class="px-4 py-6 text-sm text-gray-200">
+                            ${
+                                cve.cvssScore !== 'N/A'
+                                    ? `${cve.cvssScore}
+                                       <span class="text-gray-400 text-xs">
+                                           (v${cve.cvssVersion})
+                                       </span>`
+                                    : 'N/A'
+                            }
+                        </td>
+
+                        <!-- Severity badge column -->
                         <td class="px-4 py-6">
-                            <span class="px-4 py-2 rounded-full text-xs font-bold ${severityColors[cve.severity] || severityColors.UNKNOWN}">
+                            <span class="px-4 py-2 rounded-full text-xs font-bold
+                                         ${severityColors[cve.severity] || severityColors.UNKNOWN}">
                                 ${cve.severity}
                             </span>
                         </td>
@@ -231,16 +383,31 @@
             }).join('');
         }
 
+        // -----------------------------------------------------------------
+        // updateStats(): calculate severity counts and update summary cards
+        // -----------------------------------------------------------------
         function updateStats() {
+            // Total CVEs
             document.getElementById('totalCves').textContent = cves.length;
+
+            // Count per severity category
             const critical = cves.filter(c => c.severity === 'CRITICAL').length;
-            const high = cves.filter(c => c.severity === 'HIGH').length;
+            const high     = cves.filter(c => c.severity === 'HIGH').length;
+            const medium   = cves.filter(c => c.severity === 'MEDIUM').length;
+            const low      = cves.filter(c => c.severity === 'LOW').length;
+
+            // Update individual counters
             document.getElementById('criticalCount').textContent = critical;
-            document.getElementById('highCount').textContent = high;
+            document.getElementById('highCount').textContent     = high;
+
+            // Combined Medium + Low count
+            document.getElementById('mediumLowCount').textContent = medium + low;
         }
 
+        // Attach event listener to update button
         document.getElementById('updateBtn').addEventListener('click', fetchCVEs);
 
+        // Initial load of data when page first loads
         fetchCVEs();
     </script>
 </body>
