@@ -1,0 +1,214 @@
+<!--
+    CVE Dashboard
+    Copyright (c) 2025 Douglas M. Schauer, CISSP
+
+    Author:
+    Douglas M. Schauer, CISSP
+
+    Summary:
+    Displays the 25 most recently published CVEs from the NIST NVD,
+    including severity counts, CVSS scores, and full CVSS vectors
+    for situational awareness and cybersecurity education.
+
+    License:
+    MIT License
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top 25 Recent CVEs Dashboard</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .copyright-badge {
+            position: fixed;
+            top: 8px;
+            left: 12px;
+            font-size: 10pt;
+            color: #e5e7eb;
+            z-index: 50;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen p-8">
+
+<div class="copyright-badge">
+    © 2025 Douglas M. Schauer, CISSP
+</div>
+
+<div class="max-w-7xl mx-auto">
+
+    <!-- Commentary Block -->
+    <div class="mb-10 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm text-sm text-gray-300">
+        <p class="font-semibold text-white mb-1">CVE Dashboard</p>
+        <p>
+            © 2025 Douglas M. Schauer, CISSP · MIT License.<br>
+            Displays the 25 most recent CVEs from NIST NVD with CVSS scores,
+            severity classification, and full CVSS vectors on hover.
+        </p>
+    </div>
+
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-4">
+            CVE Dashboard
+        </h1>
+        <p class="text-xl text-gray-300">
+            Top 25 Most Recent CVEs - Real-time Updates
+        </p>
+    </div>
+
+    <div class="flex justify-center mb-8">
+        <button id="updateBtn"
+            class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700
+                   px-8 py-4 rounded-xl text-lg font-semibold shadow-2xl">
+            🔄 Update CVEs (Real-time)
+        </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div class="bg-blue-500/20 border border-blue-500/30 rounded-2xl p-8 text-center">
+            <div id="totalCves" class="text-4xl font-bold text-blue-400 mb-2">0</div>
+            <div>Total CVEs</div>
+        </div>
+        <div class="bg-red-500/20 border border-red-500/30 rounded-2xl p-8 text-center">
+            <div id="criticalCount" class="text-4xl font-bold text-red-400 mb-2">0</div>
+            <div>Critical</div>
+        </div>
+        <div class="bg-orange-500/20 border border-orange-500/30 rounded-2xl p-8 text-center">
+            <div id="highCount" class="text-4xl font-bold text-orange-400 mb-2">0</div>
+            <div>High</div>
+        </div>
+        <div class="bg-yellow-500/20 border border-yellow-500/30 rounded-2xl p-8 text-center">
+            <div id="mediumLowCount" class="text-4xl font-bold text-yellow-300 mb-2">0</div>
+            <div>Medium + Low</div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+        <div class="p-8 border-b border-white/10">
+            <h2 class="text-3xl font-bold">Recent CVEs</h2>
+            <p id="lastUpdated" class="text-gray-400">Last updated: Loading...</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-white/5">
+                    <tr>
+                        <th class="px-6 py-4 text-left">CVE ID</th>
+                        <th class="px-6 py-4 text-left">Description</th>
+                        <th class="px-4 py-4 text-left">Published</th>
+                        <th class="px-4 py-4 text-left">CVSS</th>
+                        <th class="px-4 py-4 text-left">Severity</th>
+                    </tr>
+                </thead>
+                <tbody id="cveTableBody" class="divide-y divide-white/10"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-6 text-center" id="statusMsg">Loading…</div>
+</div>
+
+<script>
+let cves = [];
+
+const severityColors = {
+    CRITICAL: 'bg-red-500 text-white',
+    HIGH: 'bg-orange-500 text-white',
+    MEDIUM: 'bg-yellow-500 text-black',
+    LOW: 'bg-green-500 text-white',
+    UNKNOWN: 'bg-gray-500 text-white'
+};
+
+async function fetchCVEs() {
+    try {
+        const endDate = new Date().toISOString();
+        const startDate = new Date(Date.now() - 30*24*60*60*1000).toISOString();
+
+        const res = await fetch(
+            `https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=25&pubStartDate=${startDate}&pubEndDate=${endDate}`
+        );
+        const data = await res.json();
+
+        cves = (data.vulnerabilities || []).map(v => {
+            const cve = v.cve;
+            const m31 = cve.metrics?.cvssMetricV31?.[0];
+            const m30 = cve.metrics?.cvssMetricV30?.[0];
+            const m2  = cve.metrics?.cvssMetricV2?.[0];
+
+            const metric = m31 || m30 || m2 || {};
+            const d = metric.cvssData || {};
+
+            const score = d.baseScore ?? null;
+            const vector = d.vectorString ?? 'N/A';
+
+            let severity = 'UNKNOWN';
+            if (score >= 9) severity = 'CRITICAL';
+            else if (score >= 7) severity = 'HIGH';
+            else if (score >= 4) severity = 'MEDIUM';
+            else if (score > 0) severity = 'LOW';
+
+            return {
+                id: cve.id,
+                description: cve.descriptions?.[0]?.value?.slice(0,150) + '…',
+                published: cve.published ? new Date(cve.published).toLocaleDateString() : 'N/A',
+                cvssScore: score ? score.toFixed(1) : 'N/A',
+                cvssVector: vector,
+                severity
+            };
+        });
+
+        render();
+        updateStats();
+        document.getElementById('lastUpdated').textContent =
+            `Last updated: ${new Date().toLocaleString()}`;
+        document.getElementById('statusMsg').textContent = 'Update successful';
+    } catch (e) {
+        document.getElementById('statusMsg').textContent = 'Failed to load CVEs';
+        console.error(e);
+    }
+}
+
+function render() {
+    const tbody = document.getElementById('cveTableBody');
+    tbody.innerHTML = cves.map(c => `
+        <tr class="hover:bg-white/10">
+            <td class="px-6 py-4 font-mono text-blue-400">
+                <a href="https://nvd.nist.gov/vuln/detail/${c.id}" target="_blank">${c.id}</a>
+            </td>
+            <td class="px-6 py-4">${c.description}</td>
+            <td class="px-4 py-4">${c.published}</td>
+            <td class="px-4 py-4" title="${c.cvssVector}">
+                ${c.cvssScore}
+            </td>
+            <td class="px-4 py-4">
+                <span class="px-3 py-1 rounded-full text-xs font-bold ${severityColors[c.severity]}">
+                    ${c.severity}
+                </span>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateStats() {
+    document.getElementById('totalCves').textContent = cves.length;
+    document.getElementById('criticalCount').textContent = cves.filter(c=>c.severity==='CRITICAL').length;
+    document.getElementById('highCount').textContent = cves.filter(c=>c.severity==='HIGH').length;
+    document.getElementById('mediumLowCount').textContent =
+        cves.filter(c=>c.severity==='MEDIUM' || c.severity==='LOW').length;
+}
+
+document.getElementById('updateBtn').addEventListener('click', fetchCVEs);
+fetchCVEs();
+</script>
+
+</body>
+</html>
